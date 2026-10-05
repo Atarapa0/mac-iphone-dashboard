@@ -1,0 +1,15 @@
+# Local configuration / secrets
+.env
+.env.*
+!.env.example
+config.json
+
+# Python
+__pycache__/
+*.py[cod]
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/

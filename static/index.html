@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width,
+        initial-scale=1,
+        maximum-scale=1,
+        user-scalable=no,
+        viewport-fit=cover"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
+
+    <meta
+        name="theme-color"
+        content="#000000"
+    >
+
+    <title>Mac Desk</title>
+
+    <link
+        rel="stylesheet"
+        href="/style.css?v=final1"
+    >
+</head>
+
+<body>
+
+<div id="app">
+
+    <!-- PAIRING -->
+
+    <section
+        id="pair-screen"
+        class="pair-screen hidden"
+    >
+        <span class="brand pair-brand">
+            MAC DESK
+        </span>
+
+        <div class="pair-card">
+
+            <span class="eyebrow">
+                PRIVATE CONNECTION
+            </span>
+
+            <h1>Mac ile eşleştir</h1>
+
+            <p>
+                Terminal'de görünen tek kullanımlık
+                6 haneli kodu gir.
+            </p>
+
+            <input
+                id="pair-code"
+                inputmode="numeric"
+                maxlength="6"
+                placeholder="000000"
+            >
+
+            <button id="pair-button">
+                BAĞLAN
+            </button>
+
+            <span
+                id="pair-error"
+                class="pair-error"
+            ></span>
+
+        </div>
+    </section>
+
+
+    <!-- DASHBOARD -->
+
+    <main
+        id="dashboard"
+        class="dashboard hidden"
+    >
+
+        <div
+            id="pages"
+            class="pages"
+        >
+
+            <!-- HOME -->
+
+            <section
+                id="home"
+                class="page home"
+            >
+
+                <header class="topbar">
+
+                    <span class="brand">
+                        MAC DESK
+                    </span>
+
+                    <div class="connection">
+                        <i></i>
+                        <span id="connection-text">
+                            MAC BAĞLI
+                        </span>
+                    </div>
+
+                </header>
+
+
+                <div
+                    id="burnin-layer"
+                    class="burnin-layer"
+                >
+
+                    <div class="hero">
+
+                        <div class="clock-area">
+
+                            <div
+                                id="clock"
+                                class="clock"
+                            >
+                                00:00
+                            </div>
+
+                            <div class="date">
+
+                                <strong
+                                    id="date-day"
+                                >
+                                    --
+                                </strong>
+
+                                <div>
+                                    <span
+                                        id="date-month"
+                                    >
+                                        --
+                                    </span>
+
+                                    <b
+                                        id="date-weekday"
+                                    >
+                                        --
+                                    </b>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Dynamic Card -->
+
+                        <aside
+                            id="dynamic-card"
+                            class="dynamic-card hidden"
+                        >
+
+                            <div
+                                id="music-card"
+                                class="music-content hidden"
+                            >
+
+                                <div class="card-label">
+                                    <i></i>
+
+                                    <span
+                                        id="music-source"
+                                    >
+                                        SPOTIFY
+                                    </span>
+                                </div>
+
+                                <h2 id="music-title">
+                                    Şarkı
+                                </h2>
+
+                                <p id="music-artist">
+                                    Sanatçı
+                                </p>
+
+                                <div class="progress">
+                                    <div
+                                        id="music-progress"
+                                    ></div>
+                                </div>
+
+                                <div class="music-times">
+                                    <span
+                                        id="music-position"
+                                    >
+                                        0:00
+                                    </span>
+
+                                    <span
+                                        id="music-duration"
+                                    >
+                                        0:00
+                                    </span>
+                                </div>
+
+                                <div class="music-controls">
+
+                                    <button
+                                        data-music="previous"
+                                    >
+                                        ◀
+                                    </button>
+
+                                    <button
+                                        id="music-play"
+                                        class="play"
+                                        data-music="playpause"
+                                    >
+                                        ❚❚
+                                    </button>
+
+                                    <button
+                                        data-music="next"
+                                    >
+                                        ▶
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Future notification UI -->
+
+                            <div
+                                id="notification-card"
+                                class="notification-content hidden"
+                            >
+
+                                <span
+                                    id="notification-app"
+                                    class="notification-app"
+                                >
+                                    BİLDİRİM
+                                </span>
+
+                                <h2
+                                    id="notification-title"
+                                >
+                                </h2>
+
+                                <p
+                                    id="notification-body"
+                                >
+                                </p>
+
+                            </div>
+
+                        </aside>
+
+                    </div>
+
+                </div>
+
+
+                <footer class="home-footer">
+
+                    <div class="device-name">
+                        <span>MACBOOK PRO</span>
+                        <strong>M4 PRO</strong>
+                    </div>
+
+                    <div class="battery-widget">
+
+                        <div class="battery-shell">
+                            <div
+                                id="battery-fill"
+                            ></div>
+                        </div>
+
+                        <strong id="battery-text">
+                            --%
+                        </strong>
+
+                        <span id="battery-charge">
+                        </span>
+
+                    </div>
+
+                    <div class="page-indicator">
+                        <i class="active"></i>
+                        <i></i>
+                        <i></i>
+                    </div>
+
+                </footer>
+
+            </section>
+
+
+            <!-- SYSTEM -->
+
+            <section class="page system-page">
+
+                <header class="page-title">
+
+                    <div>
+                        <span class="eyebrow">
+                            MACBOOK PRO
+                        </span>
+
+                        <h1>Sistem</h1>
+                    </div>
+
+                    <span class="page-index">
+                        02
+                    </span>
+
+                </header>
+
+
+                <div class="system-layout">
+
+                    <div class="metrics">
+
+                        <article class="metric">
+                            <span>CPU</span>
+
+                            <strong
+                                id="cpu-value"
+                            >
+                                --%
+                            </strong>
+
+                            <div class="meter">
+                                <i id="cpu-meter"></i>
+                            </div>
+                        </article>
+
+
+                        <article class="metric">
+                            <span>MEMORY</span>
+
+                            <strong
+                                id="ram-value"
+                            >
+                                --
+                            </strong>
+
+                            <div class="meter">
+                                <i id="ram-meter"></i>
+                            </div>
+                        </article>
+
+
+                        <article class="metric">
+                            <span>DISK</span>
+
+                            <strong
+                                id="disk-value"
+                            >
+                                --
+                            </strong>
+
+                            <div class="meter">
+                                <i id="disk-meter"></i>
+                            </div>
+                        </article>
+
+
+                        <article class="metric">
+                            <span>UPTIME</span>
+
+                            <strong
+                                id="uptime-value"
+                            >
+                                --
+                            </strong>
+                        </article>
+
+                    </div>
+
+
+                    <div class="bluetooth-panel">
+
+                        <div class="panel-title">
+
+                            <div>
+                                <span class="eyebrow">
+                                    BLUETOOTH
+                                </span>
+
+                                <h2>
+                                    Bağlı Cihazlar
+                                </h2>
+                            </div>
+
+                            <span
+                                id="bluetooth-count"
+                                class="device-count"
+                            >
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div
+                            id="bluetooth-list"
+                            class="bluetooth-list"
+                        >
+
+                            <div class="no-devices">
+                                Bağlı Bluetooth cihazı yok
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- CONTROL -->
+
+            <section class="page control-page">
+
+                <header class="page-title">
+
+                    <div>
+                        <span class="eyebrow">
+                            REMOTE
+                        </span>
+
+                        <h1>Mac Kontrol</h1>
+                    </div>
+
+                    <span class="page-index">
+                        03
+                    </span>
+
+                </header>
+
+
+                <div class="control-layout">
+
+                    <div class="volume-card">
+
+                        <span class="eyebrow">
+                            SES
+                        </span>
+
+                        <strong
+                            id="volume-value"
+                        >
+                            --%
+                        </strong>
+
+                        <div class="volume-bar">
+                            <i
+                                id="volume-fill"
+                            ></i>
+                        </div>
+
+                        <div class="volume-controls">
+
+                            <button
+                                data-control="volume-down"
+                            >
+                                −
+                            </button>
+
+                            <button
+                                id="mute-button"
+                                data-control="mute"
+                            >
+                                MUTE
+                            </button>
+
+                            <button
+                                data-control="volume-up"
+                            >
+                                +
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="action-grid">
+
+                        <button
+                            id="lock-button"
+                            class="action-button hold-action"
+                            data-hold="lock"
+                        >
+                            <span>⌾</span>
+
+                            <div>
+                                <strong>
+                                    Mac'i Kilitle
+                                </strong>
+
+                                <small>
+                                    Basılı tut
+                                </small>
+                            </div>
+
+                            <i></i>
+                        </button>
+
+
+                        <button
+                            id="sleep-button"
+                            class="action-button hold-action"
+                            data-hold="sleep"
+                        >
+                            <span>☾</span>
+
+                            <div>
+                                <strong>
+                                    Uyku Modu
+                                </strong>
+
+                                <small>
+                                    Basılı tut
+                                </small>
+                            </div>
+
+                            <i></i>
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="/app.js?v=final1"></script>
+
+</body>
+</html>
