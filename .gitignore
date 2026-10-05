@@ -1,15 +1,16 @@
-# Local configuration / secrets
+# Environment / secrets
 .env
-.env.*
-!.env.example
-config.json
 
 # Python
 __pycache__/
-*.py[cod]
+*.pyc
 
 # macOS
 .DS_Store
 
-# Editor
-.vscode/
+# Runtime logs
+logs/
+*.log
+
+# Local launchd configuration
+*.plist

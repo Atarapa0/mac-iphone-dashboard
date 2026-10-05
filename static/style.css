@@ -273,16 +273,23 @@ button {
 }
 
 .clock {
+    display: inline-block;
+
     font-size: min(34vw, 195px);
+    line-height: 1;
 
-    line-height: .78;
+    font-weight: 700;
 
-    font-weight: 750;
-
-    letter-spacing: -.095em;
+    letter-spacing: -.075em;
 
     font-variant-numeric:
         tabular-nums;
+
+    font-feature-settings:
+        "tnum" 1;
+
+    padding:
+        .08em .08em .12em .02em;
 
     background:
         linear-gradient(
@@ -296,6 +303,7 @@ button {
     -webkit-background-clip: text;
     background-clip: text;
 
+    -webkit-text-fill-color: transparent;
     color: transparent;
 
     filter:
@@ -308,7 +316,6 @@ button {
         font-size .5s
         cubic-bezier(.2,.8,.2,1);
 }
-
 .date {
     display: flex;
     align-items: center;
@@ -358,6 +365,7 @@ button {
 
 .home.has-card .clock {
     font-size: min(21vw, 120px);
+    line-height: 1;
 }
 
 

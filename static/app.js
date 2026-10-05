@@ -768,30 +768,52 @@ function escapeHTML(value) {
 
 
 /* Volume */
-
 function updateVolume(volume) {
     if (!volume) {
         return;
     }
 
-    document.getElementById(
-        "volume-value"
-    ).textContent =
-        volume.volume + "%";
+    const value =
+        Number(volume.volume) || 0;
 
-    document.getElementById(
-        "volume-fill"
-    ).style.width =
-        volume.volume + "%";
+    const valueElement =
+        document.getElementById(
+            "volume-value"
+        );
 
-    document.getElementById(
-        "mute-button"
-    ).textContent =
-        volume.muted
-            ? "UNMUTE"
-            : "MUTE";
+    const fillElement =
+        document.getElementById(
+            "volume-fill"
+        );
+
+    const muteButton =
+        document.getElementById(
+            "mute-button"
+        );
+
+    if (volume.muted) {
+
+        valueElement.textContent =
+            "SESSİZ";
+
+        fillElement.style.width =
+            "0%";
+
+        muteButton.textContent =
+            "UNMUTE";
+
+    } else {
+
+        valueElement.textContent =
+            value + "%";
+
+        fillElement.style.width =
+            value + "%";
+
+        muteButton.textContent =
+            "MUTE";
+    }
 }
-
 
 /* Music commands */
 

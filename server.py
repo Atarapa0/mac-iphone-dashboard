@@ -661,232 +661,24 @@ def get_uptime():
 # Bluetooth
 # ─────────────────────────────────────
 
-def find_connected_bluetooth(
-    value,
-    devices,
-    parent_key=""
-):
-    if isinstance(
-        value,
-        dict
-    ):
-
-        parent_lower = (
-            str(parent_key)
-            .lower()
-            .replace(
-                "_",
-                " "
-            )
-        )
-
-        in_connected_section = (
-            "connected"
-            in parent_lower
-            and "not connected"
-            not in parent_lower
-            and "disconnected"
-            not in parent_lower
-        )
-
-        connected_text = str(
-            value.get(
-                "device_connected",
-                ""
-            )
-        ).strip().lower()
-
-        explicitly_connected = (
-            connected_text
-            in {
-                "attrib_yes",
-                "yes",
-                "true",
-                "1"
-            }
-        )
-
-        name = (
-            value.get(
-                "device_name"
-            )
-            or value.get(
-                "_name"
-            )
-            or value.get(
-                "name"
-            )
-        )
-
-        if (
-            explicitly_connected
-            or in_connected_section
-        ) and name:
-
-            battery = None
-
-            for (
-                key,
-                item
-            ) in value.items():
-
-                if (
-                    "battery"
-                    in str(key).lower()
-                    and isinstance(
-                        item,
-                        (
-                            str,
-                            int,
-                            float
-                        )
-                    )
-                ):
-
-                    match = re.search(
-                        r"(\d+)",
-                        str(item)
-                    )
-
-                    if match:
-                        battery = int(
-                            match.group(1)
-                        )
-                        break
-
-            devices.append(
-                {
-                    "name":
-                        str(name),
-
-                    "battery":
-                        battery
-                }
-            )
-
-        for (
-            key,
-            child
-        ) in value.items():
-
-            child_key = str(
-                key
-            )
-
-            child_lower = (
-                child_key
-                .lower()
-                .replace(
-                    "_",
-                    " "
-                )
-            )
-
-            child_is_connected_section = (
-                "connected"
-                in child_lower
-                and "not connected"
-                not in child_lower
-                and "disconnected"
-                not in child_lower
-            )
-
-            if (
-                child_is_connected_section
-                and isinstance(
-                    child,
-                    dict
-                )
-            ):
-
-                for (
-                    device_name,
-                    device_data
-                ) in child.items():
-
-                    if not isinstance(
-                        device_data,
-                        dict
-                    ):
-                        continue
-
-                    battery = None
-
-                    for (
-                        battery_key,
-                        battery_value
-                    ) in device_data.items():
-
-                        if (
-                            "battery"
-                            in str(
-                                battery_key
-                            ).lower()
-                            and isinstance(
-                                battery_value,
-                                (
-                                    str,
-                                    int,
-                                    float
-                                )
-                            )
-                        ):
-
-                            match = re.search(
-                                r"(\d+)",
-                                str(
-                                    battery_value
-                                )
-                            )
-
-                            if match:
-                                battery = int(
-                                    match.group(1)
-                                )
-                                break
-
-                    devices.append(
-                        {
-                            "name":
-                                str(
-                                    device_data.get(
-                                        "device_name"
-                                    )
-                                    or device_data.get(
-                                        "_name"
-                                    )
-                                    or device_data.get(
-                                        "name"
-                                    )
-                                    or device_name
-                                ),
-
-                            "battery":
-                                battery
-                        }
-                    )
-
-            find_connected_bluetooth(
-                child,
-                devices,
-                child_key
-            )
-
-    elif isinstance(
-        value,
-        list
-    ):
-
-        for child in value:
-
-            find_connected_bluetooth(
-                child,
-                devices,
-                parent_key
-            )
-
-
 def get_bluetooth_devices():
+    """
+    macOS system_profiler çıktısından yalnızca
+    GERÇEKTEN bağlı Bluetooth cihazlarını döndürür.
+
+    macOS yapısı:
+    SPBluetoothDataType
+        -> controller
+            -> device_connected
+                -> [
+                    {
+                        "Cihaz Adı": {
+                            ...
+                        }
+                    }
+                ]
+    """
+
     result = run(
         [
             "system_profiler",
@@ -907,52 +699,104 @@ def get_bluetooth_devices():
             result.stdout
         )
 
-        devices = []
-
-        find_connected_bluetooth(
-            data,
-            devices
+        controllers = data.get(
+            "SPBluetoothDataType",
+            []
         )
 
-        unique = []
-        names = set()
+        devices = []
 
-        for device in devices:
+        for controller in controllers:
 
-            name = str(
-                device.get(
-                    "name"
-                )
-                or ""
-            ).strip()
-
-            if not name:
-                continue
-
-            normalized = (
-                name.casefold()
+            connected_devices = controller.get(
+                "device_connected",
+                []
             )
 
-            if normalized in names:
+            if not isinstance(
+                connected_devices,
+                list
+            ):
                 continue
 
-            names.add(
-                normalized
-            )
+            for device_group in connected_devices:
 
-            unique.append(
-                {
-                    "name":
-                        name,
+                if not isinstance(
+                    device_group,
+                    dict
+                ):
+                    continue
 
-                    "battery":
-                        device.get(
-                            "battery"
+                for (
+                    device_name,
+                    device_info
+                ) in device_group.items():
+
+                    if not isinstance(
+                        device_info,
+                        dict
+                    ):
+                        device_info = {}
+
+                    battery = None
+
+                    # Örnek:
+                    # device_batteryLevelMain: "%100"
+                    battery_value = (
+                        device_info.get(
+                            "device_batteryLevelMain"
                         )
-                }
-            )
+                    )
 
-        return unique
+                    if battery_value is not None:
+
+                        match = re.search(
+                            r"(\d+)",
+                            str(
+                                battery_value
+                            )
+                        )
+
+                        if match:
+
+                            battery = int(
+                                match.group(1)
+                            )
+
+                    device_type = (
+                        device_info.get(
+                            "device_minorType"
+                        )
+                        or ""
+                    )
+
+                    rssi = (
+                        device_info.get(
+                            "device_rssi"
+                        )
+                    )
+
+                    devices.append(
+                        {
+                            "name":
+                                str(
+                                    device_name
+                                ).strip(),
+
+                            "battery":
+                                battery,
+
+                            "type":
+                                str(
+                                    device_type
+                                ).strip(),
+
+                            "rssi":
+                                rssi
+                        }
+                    )
+
+        return devices
 
     except Exception as error:
 
@@ -962,7 +806,6 @@ def get_bluetooth_devices():
         )
 
         return []
-
 
 # ─────────────────────────────────────
 # Volume
@@ -1298,7 +1141,7 @@ def mac_control(command):
         applescript(
             '''
             set v to output volume of (get volume settings)
-            set newVolume to v + 10
+            set newVolume to v + 5
             if newVolume > 100 then set newVolume to 100
             set volume output volume newVolume
             '''
@@ -1311,7 +1154,7 @@ def mac_control(command):
         applescript(
             '''
             set v to output volume of (get volume settings)
-            set newVolume to v - 10
+            set newVolume to v - 5
             if newVolume < 0 then set newVolume to 0
             set volume output volume newVolume
             '''
