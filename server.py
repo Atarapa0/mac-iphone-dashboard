@@ -352,50 +352,56 @@ def get_battery():
 def get_cpu_usage():
     result = run(
         [
-            "ps",
-            "-A",
-            "-o",
-            "%cpu="
-        ]
+            "top",
+            "-l",
+            "1",
+            "-n",
+            "0"
+        ],
+        timeout=6
     )
 
-    if not result:
+    if (
+        not result
+        or result.returncode != 0
+    ):
+        return None
+
+    match = re.search(
+        r"CPU usage:\s*([\d.]+)% user,\s*([\d.]+)% sys,\s*([\d.]+)% idle",
+        result.stdout,
+        re.IGNORECASE
+    )
+
+    if not match:
         return None
 
     try:
-        values = []
-
-        for line in result.stdout.splitlines():
-
-            line = line.strip()
-
-            if line:
-                values.append(
-                    float(line)
-                )
-
-        logical = (
-            os.cpu_count()
-            or 1
+        user = float(
+            match.group(1)
         )
 
-        usage = (
-            sum(values)
-            / logical
+        system = float(
+            match.group(2)
         )
+
+        usage = user + system
 
         return round(
-            min(
-                100,
-                max(
-                    0,
+            max(
+                0.0,
+                min(
+                    100.0,
                     usage
                 )
             ),
             1
         )
 
-    except Exception:
+    except (
+        TypeError,
+        ValueError
+    ):
         return None
 
 
@@ -657,41 +663,76 @@ def get_uptime():
 
 def find_connected_bluetooth(
     value,
-    devices
+    devices,
+    parent_key=""
 ):
     if isinstance(
         value,
         dict
     ):
 
-        connected = value.get(
-            "device_connected"
+        parent_lower = (
+            str(parent_key)
+            .lower()
+            .replace(
+                "_",
+                " "
+            )
         )
 
-        if connected == "attrib_Yes":
+        in_connected_section = (
+            "connected"
+            in parent_lower
+            and "not connected"
+            not in parent_lower
+            and "disconnected"
+            not in parent_lower
+        )
 
-            name = (
-                value.get(
-                    "device_name"
-                )
-                or value.get(
-                    "_name"
-                )
-                or "Bluetooth Cihazı"
+        connected_text = str(
+            value.get(
+                "device_connected",
+                ""
             )
+        ).strip().lower()
+
+        explicitly_connected = (
+            connected_text
+            in {
+                "attrib_yes",
+                "yes",
+                "true",
+                "1"
+            }
+        )
+
+        name = (
+            value.get(
+                "device_name"
+            )
+            or value.get(
+                "_name"
+            )
+            or value.get(
+                "name"
+            )
+        )
+
+        if (
+            explicitly_connected
+            or in_connected_section
+        ) and name:
 
             battery = None
 
-            for key, item in value.items():
-
-                key_lower = (
-                    str(key)
-                    .lower()
-                )
+            for (
+                key,
+                item
+            ) in value.items():
 
                 if (
                     "battery"
-                    in key_lower
+                    in str(key).lower()
                     and isinstance(
                         item,
                         (
@@ -708,25 +749,127 @@ def find_connected_bluetooth(
                     )
 
                     if match:
-
                         battery = int(
                             match.group(1)
                         )
-
                         break
 
             devices.append(
                 {
-                    "name": name,
-                    "battery": battery
+                    "name":
+                        str(name),
+
+                    "battery":
+                        battery
                 }
             )
 
-        for child in value.values():
+        for (
+            key,
+            child
+        ) in value.items():
+
+            child_key = str(
+                key
+            )
+
+            child_lower = (
+                child_key
+                .lower()
+                .replace(
+                    "_",
+                    " "
+                )
+            )
+
+            child_is_connected_section = (
+                "connected"
+                in child_lower
+                and "not connected"
+                not in child_lower
+                and "disconnected"
+                not in child_lower
+            )
+
+            if (
+                child_is_connected_section
+                and isinstance(
+                    child,
+                    dict
+                )
+            ):
+
+                for (
+                    device_name,
+                    device_data
+                ) in child.items():
+
+                    if not isinstance(
+                        device_data,
+                        dict
+                    ):
+                        continue
+
+                    battery = None
+
+                    for (
+                        battery_key,
+                        battery_value
+                    ) in device_data.items():
+
+                        if (
+                            "battery"
+                            in str(
+                                battery_key
+                            ).lower()
+                            and isinstance(
+                                battery_value,
+                                (
+                                    str,
+                                    int,
+                                    float
+                                )
+                            )
+                        ):
+
+                            match = re.search(
+                                r"(\d+)",
+                                str(
+                                    battery_value
+                                )
+                            )
+
+                            if match:
+                                battery = int(
+                                    match.group(1)
+                                )
+                                break
+
+                    devices.append(
+                        {
+                            "name":
+                                str(
+                                    device_data.get(
+                                        "device_name"
+                                    )
+                                    or device_data.get(
+                                        "_name"
+                                    )
+                                    or device_data.get(
+                                        "name"
+                                    )
+                                    or device_name
+                                ),
+
+                            "battery":
+                                battery
+                        }
+                    )
 
             find_connected_bluetooth(
                 child,
-                devices
+                devices,
+                child_key
             )
 
     elif isinstance(
@@ -738,7 +881,8 @@ def find_connected_bluetooth(
 
             find_connected_bluetooth(
                 child,
-                devices
+                devices,
+                parent_key
             )
 
 
@@ -759,7 +903,6 @@ def get_bluetooth_devices():
         return []
 
     try:
-
         data = json.loads(
             result.stdout
         )
@@ -776,15 +919,37 @@ def get_bluetooth_devices():
 
         for device in devices:
 
-            name = device["name"]
+            name = str(
+                device.get(
+                    "name"
+                )
+                or ""
+            ).strip()
 
-            if name in names:
+            if not name:
                 continue
 
-            names.add(name)
+            normalized = (
+                name.casefold()
+            )
+
+            if normalized in names:
+                continue
+
+            names.add(
+                normalized
+            )
 
             unique.append(
-                device
+                {
+                    "name":
+                        name,
+
+                    "battery":
+                        device.get(
+                            "battery"
+                        )
+                }
             )
 
         return unique
@@ -804,9 +969,6 @@ def get_bluetooth_devices():
 # ─────────────────────────────────────
 
 def get_volume():
-    # İki ayrı AppleScript yerine
-    # tek sorguda volume + mute alıyoruz.
-
     output = applescript(
         '''
         set currentSettings to get volume settings
@@ -849,9 +1011,6 @@ def get_volume():
 # ─────────────────────────────────────
 
 def get_spotify():
-    # Spotify bilgilerini tek AppleScript
-    # çağrısında alıyoruz.
-
     script = r'''
     tell application "System Events"
         if not (exists process "Spotify") then
@@ -927,15 +1086,29 @@ def get_spotify():
         position = 0
 
     return {
-        "available": True,
+        "available":
+            True,
+
         "playing":
             state == "playing",
-        "source": "Spotify",
-        "title": title,
-        "artist": artist,
-        "album": album,
-        "duration": duration,
-        "position": position
+
+        "source":
+            "Spotify",
+
+        "title":
+            title,
+
+        "artist":
+            artist,
+
+        "album":
+            album,
+
+        "duration":
+            duration,
+
+        "position":
+            position
     }
 
 
@@ -1018,15 +1191,29 @@ def get_apple_music():
         position = 0
 
     return {
-        "available": True,
+        "available":
+            True,
+
         "playing":
             state == "playing",
-        "source": "Apple Music",
-        "title": title,
-        "artist": artist,
-        "album": album,
-        "duration": duration,
-        "position": position
+
+        "source":
+            "Apple Music",
+
+        "title":
+            title,
+
+        "artist":
+            artist,
+
+        "album":
+            album,
+
+        "duration":
+            duration,
+
+        "position":
+            position
     }
 
 
@@ -1093,7 +1280,7 @@ def music_command(command):
     else:
         return False
 
-    applescript(
+    result = applescript(
         script
     )
 
@@ -1145,25 +1332,38 @@ def mac_control(command):
 
     if command == "lock":
 
-        run(
+        result = run(
             [
-                "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession",
-                "-suspend"
-            ]
+                "osascript",
+                "-e",
+                (
+                    'tell application "System Events" '
+                    'to keystroke "q" using '
+                    '{control down, command down}'
+                )
+            ],
+            timeout=6
         )
 
-        return True
+        return bool(
+            result
+            and result.returncode == 0
+        )
 
     if command == "sleep":
 
-        run(
+        result = run(
             [
                 "pmset",
                 "sleepnow"
-            ]
+            ],
+            timeout=6
         )
 
-        return True
+        return bool(
+            result
+            and result.returncode == 0
+        )
 
     return False
 
@@ -1356,7 +1556,8 @@ class Handler(
 
             self.json_response(
                 {
-                    "connected": True,
+                    "connected":
+                        True,
 
                     "battery":
                         get_battery(),

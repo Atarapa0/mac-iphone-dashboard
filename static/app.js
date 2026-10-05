@@ -548,25 +548,54 @@ async function updateSystem() {
         const data =
             await response.json();
 
-        if (data.cpu != null) {
+
+        /* CPU */
+
+        const cpuValue =
             document.getElementById(
                 "cpu-value"
-            ).textContent =
-                data.cpu + "%";
+            );
+
+        if (
+            data.cpu != null &&
+            Number.isFinite(
+                Number(data.cpu)
+            )
+        ) {
+            cpuValue.textContent =
+                Number(data.cpu)
+                    .toFixed(1)
+                    .replace(".0", "")
+                + "%";
 
             setMeter(
                 "cpu-meter",
                 data.cpu
             );
+
+        } else {
+            cpuValue.textContent = "—";
+
+            setMeter(
+                "cpu-meter",
+                0
+            );
         }
+
+
+        /* RAM */
+
+        const ramValue =
+            document.getElementById(
+                "ram-value"
+            );
 
         if (
             data.memory &&
-            data.memory.used_gb != null
+            data.memory.used_gb != null &&
+            data.memory.total_gb != null
         ) {
-            document.getElementById(
-                "ram-value"
-            ).textContent =
+            ramValue.textContent =
                 data.memory.used_gb +
                 " / " +
                 data.memory.total_gb +
@@ -576,15 +605,30 @@ async function updateSystem() {
                 "ram-meter",
                 data.memory.percentage
             );
+
+        } else {
+            ramValue.textContent = "—";
+
+            setMeter(
+                "ram-meter",
+                0
+            );
         }
+
+
+        /* Disk */
+
+        const diskValue =
+            document.getElementById(
+                "disk-value"
+            );
 
         if (
             data.disk &&
-            data.disk.used_gb != null
+            data.disk.used_gb != null &&
+            data.disk.total_gb != null
         ) {
-            document.getElementById(
-                "disk-value"
-            ).textContent =
+            diskValue.textContent =
                 data.disk.used_gb +
                 " / " +
                 data.disk.total_gb +
@@ -594,12 +638,26 @@ async function updateSystem() {
                 "disk-meter",
                 data.disk.percentage
             );
+
+        } else {
+            diskValue.textContent = "—";
+
+            setMeter(
+                "disk-meter",
+                0
+            );
         }
+
+
+        /* Uptime */
 
         document.getElementById(
             "uptime-value"
         ).textContent =
-            data.uptime || "--";
+            data.uptime || "—";
+
+
+        /* Bluetooth */
 
         updateBluetooth(
             data.bluetooth || []
@@ -607,7 +665,6 @@ async function updateSystem() {
 
     } catch {}
 }
-
 
 /* Bluetooth */
 
